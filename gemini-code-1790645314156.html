@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explorador Dinámico del Teorema de Pitágoras</title>
+  <style>
+    :root {
+      --cateto-a: #e74c3c;
+      --cateto-b: #3498db;
+      --hipotenusa: #2ecc71;
+      --bg: #f8f9fa;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: var(--bg);
+      color: #2c3e50;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      margin-bottom: 5px;
+      font-size: 1.8rem;
+      text-align: center;
+    }
+    p.subtitle {
+      margin-top: 0;
+      color: #7f8c8d;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      align-items: flex-start;
+      max-width: 1000px;
+      width: 100%;
+    }
+    .canvas-card {
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    canvas {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background-color: #fafafa;
+      touch-action: none;
+      cursor: crosshair;
+    }
+    .info-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      flex: 1;
+      min-width: 280px;
+      max-width: 400px;
+    }
+    .metric-box {
+      margin-bottom: 15px;
+      padding: 12px;
+      border-radius: 8px;
+      border-left: 5px solid;
+    }
+    .box-a { border-color: var(--cateto-a); background-color: #fdf2f2; }
+    .box-b { border-color: var(--cateto-b); background-color: #f0f7fc; }
+    .box-c { border-color: var(--hipotenusa); background-color: #f0fdf4; }
+    .equation-box {
+      background: #2c3e50;
+      color: #ffffff;
+      padding: 15px;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: bold;
+      margin-top: 15px;
+    }
+    .instructions {
+      font-size: 0.85rem;
+      color: #7f8c8d;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Explorador Dinámico del Teorema de Pitágoras</h1>
+  <p class="subtitle">Arrastra los vértices rojos A o B para cambiar las dimensiones del triángulo</p>
+
+  <div class="container">
+    <div class="canvas-card">
+      <canvas id="pitagorasCanvas" width="550" height="500"></canvas>
+      <div class="instructions">
+        💡 <b>Instrucción:</b> Observa cómo el área del cuadrado verde sobre la hipotenusa es siempre igual a la suma de las áreas de los cuadrados rojo y azul.
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3>Medidas y Áreas</h3>
+      
+      <div class="metric-box box-a">
+        <strong>Cateto a (Rojo):</strong> <span id="lenA">0</span> u<br>
+        <strong>Área del Cuadrado A (a²):</strong> <span id="areaA">0</span> u²
+      </div>
+
+      <div class="metric-box box-b">
+        <strong>Cateto b (Azul):</strong> <span id="lenB">0</span> u<br>
+        <strong>Área del Cuadrado B (b²):</strong> <span id="areaB">0</span> u²
+      </div>
+
+      <div class="metric-box box-c">
+        <strong>Hipotenusa c (Verde):</strong> <span id="lenC">0</span> u<br>
+        <strong>Área del Cuadrado C (c²):</strong> <span id="areaC">0</span> u²
+      </div>
+
+      <div class="equation-box">
+        <span id="eqA">0</span> + <span id="eqB">0</span> = <span id="eqC">0</span><br>
+        <small style="font-size:0.8rem; font-weight:normal; opacity:0.9;">a² + b² = c²</small>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('pitagorasCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Vértices del triángulo rectángulo (C es el ángulo recto fijo)
+    let pC = { x: 220, y: 320 }; // Ángulo recto
+    let pA = { x: 220, y: 200 }; // Arriba (define cateto vertical)
+    let pB = { x: 380, y: 320 }; // Derecha (define cateto horizontal)
+
+    let draggingPoint = null;
+
+    function distance(p1, p2) {
+      return Math.hypot(p2.x - p1.x, p2.y - p1.y);
+    }
+
+    function drawSquareOnSegment(p1, p2, dir, fillColor, strokeColor) {
+      const dx = p2.x - p1.x;
+      const dy = p2.y - p1.y;
+
+      // Perpendicular vector
+      const px = -dy * dir;
+      const py = dx * dir;
+
+      const p3 = { x: p2.x + px, y: p2.y + py };
+      const p4 = { x: p1.x + px, y: p1.y + py };
+
+      ctx.beginPath();
+      ctx.moveTo(p1.x, p1.y);
+      ctx.lineTo(p2.x, p2.y);
+      ctx.lineTo(p3.x, p3.y);
+      ctx.lineTo(p4.x, p4.y);
+      ctx.closePath();
+
+      ctx.fillStyle = fillColor;
+      ctx.fill();
+      ctx.strokeStyle = strokeColor;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
+
+    function render() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Calcular longitudes (escala: 20 píxeles = 1 unidad)
+      const scale = 20;
+      const a = distance(pC, pA) / scale;
+      const b = distance(pC, pB) / scale;
+      const c = Math.hypot(a, b);
+
+      const areaA = a * a;
+      const areaB = b * b;
+      const areaC = c * c;
+
+      // Dibujar cuadrados sobre los lados
+      drawSquareOnSegment(pA, pC, 1, 'rgba(231, 76, 60, 0.25)', '#e74c3c'); // Cateto A
+      drawSquareOnSegment(pC, pB, 1, 'rgba(52, 152, 219, 0.25)', '#3498db'); // Cateto B
+      drawSquareOnSegment(pB, pA, 1, 'rgba(46, 204, 113, 0.25)', '#2ecc71'); // Hipotenusa C
+
+      // Dibujar triángulo rectángulo
+      ctx.beginPath();
+      ctx.moveTo(pC.x, pC.y);
+      ctx.lineTo(pA.x, pA.y);
+      ctx.lineTo(pB.x, pB.y);
+      ctx.closePath();
+      ctx.fillStyle = '#2c3e50';
+      ctx.fill();
+
+      // Indicador de ángulo recto
+      const sqSize = 12;
+      ctx.beginPath();
+      ctx.rect(pC.x, pC.y - sqSize, sqSize, sqSize);
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Dibujar puntos de control arrastrambles
+      drawHandle(pA, 'A');
+      drawHandle(pB, 'B');
+
+      // Actualizar datos en HTML
+      document.getElementById('lenA').innerText = a.toFixed(1);
+      document.getElementById('areaA').innerText = areaA.toFixed(1);
+
+      document.getElementById('lenB').innerText = b.toFixed(1);
+      document.getElementById('areaB').innerText = areaB.toFixed(1);
+
+      document.getElementById('lenC').innerText = c.toFixed(1);
+      document.getElementById('areaC').innerText = areaC.toFixed(1);
+
+      document.getElementById('eqA').innerText = areaA.toFixed(1);
+      document.getElementById('eqB').innerText = areaB.toFixed(1);
+      document.getElementById('eqC').innerText = (areaA + areaB).toFixed(1);
+    }
+
+    function drawHandle(point, label) {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#e74c3c';
+      ctx.fill();
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.fillStyle = '#2c3e50';
+      ctx.font = 'bold 12px Segoe UI';
+      ctx.fillText(label, point.x + 12, point.y + 4);
+    }
+
+    // Interacción con mouse/touch
+    function getMousePos(e) {
+      const rect = canvas.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      return {
+        x: clientX - rect.left,
+        y: clientY - rect.top
+      };
+    }
+
+    function startDrag(e) {
+      const pos = getMousePos(e);
+      if (distance(pos, pA) < 15) draggingPoint = 'A';
+      else if (distance(pos, pB) < 15) draggingPoint = 'B';
+    }
+
+    function drag(e) {
+      if (!draggingPoint) return;
+      const pos = getMousePos(e);
+
+      if (draggingPoint === 'A') {
+        pA.y = Math.min(Math.max(pos.y, 40), pC.y - 20); // Restringir movimiento vertical
+      } else if (draggingPoint === 'B') {
+        pB.x = Math.max(Math.min(pos.x, canvas.width - 40), pC.x + 20); // Restringir movimiento horizontal
+      }
+      render();
+    }
+
+    function stopDrag() {
+      draggingPoint = null;
+    }
+
+    canvas.addEventListener('mousedown', startDrag);
+    canvas.addEventListener('mousemove', drag);
+    window.addEventListener('mouseup', stopDrag);
+
+    canvas.addEventListener('touchstart', startDrag);
+    canvas.addEventListener('touchmove', drag);
+    window.addEventListener('touchend', stopDrag);
+
+    render();
+  </script>
+</body>
+</html>
