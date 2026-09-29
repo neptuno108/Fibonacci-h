@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explorador de Fibonacci y Espiral Dorada</title>
+  <style>
+    :root {
+      --primary: #2c3e50;
+      --accent: #e67e22;
+      --bg: #f8f9fa;
+    }
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background-color: var(--bg);
+      color: var(--primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 { margin-bottom: 5px; font-size: 1.8rem; text-align: center; }
+    p.subtitle { margin-top: 0; color: #7f8c8d; text-align: center; font-size: 0.95rem; }
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      align-items: flex-start;
+      max-width: 1100px;
+      width: 100%;
+    }
+    .canvas-card {
+      background: #ffffff;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    canvas {
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      background-color: #fafafa;
+    }
+    .controls {
+      margin-top: 15px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    button {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    button:hover { background-color: #d35400; }
+    button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
+    .info-card {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+      flex: 1;
+      min-width: 300px;
+      max-width: 420px;
+    }
+    .fib-sequence {
+      background: #edf2f7;
+      padding: 12px;
+      border-radius: 8px;
+      word-wrap: break-word;
+      font-family: monospace;
+      font-size: 1.1rem;
+      color: #2b6cb0;
+      margin-bottom: 15px;
+    }
+    .ratio-box {
+      background: #feefc3;
+      border-left: 5px solid #f6ad55;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+    }
+    .instructions {
+      font-size: 0.85rem;
+      color: #7f8c8d;
+      margin-top: 10px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Explorador Dinámico de Fibonacci</h1>
+  <p class="subtitle">Descubre cómo los números forman la Espiral Dorada y la Razón Áurea</p>
+
+  <div class="container">
+    <div class="canvas-card">
+      <canvas id="fibCanvas" width="550" height="450"></canvas>
+      <div class="controls">
+        <button id="btnLess" onclick="changeSteps(-1)">- Quitar Paso</button>
+        <span id="stepDisplay" style="font-weight:bold; font-size:1.1rem;">Paso: 1</span>
+        <button id="btnMore" onclick="changeSteps(1)">+ Agregar Paso</button>
+      </div>
+      <div class="instructions">
+        💡 <b>Observación:</b> Cada nuevo cuadrado se construye sumando los lados de los dos anteriores.
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h3>Secuencia Numérica</h3>
+      <div class="fib-sequence" id="sequenceBox">1, 1</div>
+
+      <h3>Aproximación a la Razón Áurea ($\phi$)</h3>
+      <div class="ratio-box">
+        <b>Cociente ($F_n / F_{n-1}$):</b> <span id="ratioVal">1.0000</span><br>
+        <small>El valor teórico de $\phi$ es aproximadamente <b>1.618033...</b></small>
+      </div>
+
+      <p style="font-size: 0.9rem; color: #4a5568;">
+        A medida que aumentas los pasos, la división entre el último número y el anterior se acerca cada vez más al <b>Número de Oro</b>.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('fibCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    let steps = 2; // Número de pasos iniciales
+    const maxSteps = 10;
+    const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22', '#1abc9c', '#d35400', '#8e44ad', '#16a085'];
+
+    function getFibonacciSequence(n) {
+      let seq = [1, 1];
+      for (let i = 2; i < n; i++) {
+        seq.push(seq[i - 1] + seq[i - 2]);
+      }
+      return seq.slice(0, n);
+    }
+
+    function changeSteps(delta) {
+      steps = Math.max(2, Math.min(maxSteps, steps + delta));
+      document.getElementById('stepDisplay').innerText = `Paso: ${steps - 1}`;
+      document.getElementById('btnLess').disabled = (steps <= 2);
+      document.getElementById('btnMore').disabled = (steps >= maxSteps);
+      draw();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const fib = getFibonacciSequence(steps);
+
+      // Actualizar interfaz escrita
+      document.getElementById('sequenceBox').innerText = fib.join(', ');
+      const ratio = fib[fib.length - 1] / fib[fib.length - 2];
+      document.getElementById('ratioVal').innerText = ratio.toFixed(6);
+
+      // Calcular escala adaptativa
+      let x = 0, y = 0;
+      let minX = 0, maxX = 1, minY = 0, maxY = 1;
+      
+      // Simulación previa para límites
+      let currX = 0, currY = 0;
+      let dir = 0; // 0: Izq, 1: Abajo, 2: Der, 3: Arriba
+      for (let i = 0; i < fib.length; i++) {
+        let val = fib[i];
+        if (dir === 0) currX += val;
+        else if (dir === 1) currY += val;
+        else if (dir === 2) currX -= val;
+        else if (dir === 3) currY -= val;
+        
+        minX = Math.min(minX, currX); maxX = Math.max(maxX, currX);
+        minY = Math.min(minY, currY); maxY = Math.max(maxY, currY);
+        dir = (dir + 1) % 4;
+      }
+
+      const gridWidth = maxX - minX;
+      const gridHeight = maxY - minY;
+      const padding = 40;
+      const scale = Math.min((canvas.width - padding * 2) / gridWidth, (canvas.height - padding * 2) / gridHeight);
+
+      // Dibujo real centrado
+      ctx.save();
+      ctx.translate(canvas.width / 2 - ((minX + maxX) / 2) * scale, canvas.height / 2 - ((minY + maxY) / 2) * scale);
+
+      currX = 0; currY = 0; dir = 0;
+
+      for (let i = 0; i < fib.length; i++) {
+        let val = fib[i];
+        let sqX = currX, sqY = currY;
+
+        if (dir === 0) { sqY = currY - val; currX += val; }
+        else if (dir === 1) { currY += val; }
+        else if (dir === 2) { sqX = currX - val; currX -= val; }
+        else if (dir === 3) { sqY = currY - val; sqX = currX - val; currY -= val; }
+
+        // Dibujar Cuadrado
+        ctx.fillStyle = colors[i % colors.length] + '33'; // Transparente
+        ctx.strokeStyle = colors[i % colors.length];
+        ctx.lineWidth = 2;
+        ctx.fillRect(sqX * scale, sqY * scale, val * scale, val * scale);
+        ctx.strokeRect(sqX * scale, sqY * scale, val * scale, val * scale);
+
+        // Texto del número
+        if (val * scale > 15) {
+          ctx.fillStyle = '#2c3e50';
+          ctx.font = `${Math.max(10, Math.min(val * scale * 0.3, 20))}px Segoe UI`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(val, (sqX + val / 2) * scale, (sqY + val / 2) * scale);
+        }
+
+        // Arco de la Espiral
+        ctx.beginPath();
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = '#2c3e50';
+        let arcX, arcY, startAngle, endAngle;
+
+        if (dir === 0) { arcX = sqX; arcY = sqY + val; startAngle = 1.5 * Math.PI; endAngle = 0; }
+        else if (dir === 1) { arcX = sqX; arcY = sqY; startAngle = 0; endAngle = 0.5 * Math.PI; }
+        else if (dir === 2) { arcX = sqX + val; arcY = sqY; startAngle = 0.5 * Math.PI; endAngle = Math.PI; }
+        else if (dir === 3) { arcX = sqX + val; arcY = sqY + val; startAngle = Math.PI; endAngle = 1.5 * Math.PI; }
+
+        ctx.arc(arcX * scale, arcY * scale, val * scale, startAngle, endAngle);
+        ctx.stroke();
+
+        dir = (dir + 1) % 4;
+      }
+
+      ctx.restore();
+    }
+
+    draw();
+  </script>
+</body>
+</html>
