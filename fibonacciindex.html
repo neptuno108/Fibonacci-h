@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Explorador de Fibonacci y Espiral Dorada</title>
+  <title>Explorador Dinámico de Fibonacci</title>
   <style>
     :root {
       --primary: #2c3e50;
@@ -120,10 +120,10 @@
       <h3>Secuencia Numérica</h3>
       <div class="fib-sequence" id="sequenceBox">1, 1</div>
 
-      <h3>Aproximación a la Razón Áurea ($\phi$)</h3>
+      <h3>Aproximación a la Razón Áurea (φ)</h3>
       <div class="ratio-box">
-        <b>Cociente ($F_n / F_{n-1}$):</b> <span id="ratioVal">1.0000</span><br>
-        <small>El valor teórico de $\phi$ es aproximadamente <b>1.618033...</b></small>
+        <b>Cociente (Fₙ / Fₙ₋₁):</b> <span id="ratioVal">1.0000</span><br>
+        <small>El valor teórico de φ es aproximadamente <b>1.618033...</b></small>
       </div>
 
       <p style="font-size: 0.9rem; color: #4a5568;">
@@ -136,7 +136,7 @@
     const canvas = document.getElementById('fibCanvas');
     const ctx = canvas.getContext('2d');
     
-    let steps = 2; // Número de pasos iniciales
+    let steps = 2;
     const maxSteps = 10;
     const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#e67e22', '#1abc9c', '#d35400', '#8e44ad', '#16a085'];
 
@@ -160,18 +160,15 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const fib = getFibonacciSequence(steps);
 
-      // Actualizar interfaz escrita
       document.getElementById('sequenceBox').innerText = fib.join(', ');
       const ratio = fib[fib.length - 1] / fib[fib.length - 2];
       document.getElementById('ratioVal').innerText = ratio.toFixed(6);
 
-      // Calcular escala adaptativa
       let x = 0, y = 0;
       let minX = 0, maxX = 1, minY = 0, maxY = 1;
       
-      // Simulación previa para límites
       let currX = 0, currY = 0;
-      let dir = 0; // 0: Izq, 1: Abajo, 2: Der, 3: Arriba
+      let dir = 0;
       for (let i = 0; i < fib.length; i++) {
         let val = fib[i];
         if (dir === 0) currX += val;
@@ -189,7 +186,6 @@
       const padding = 40;
       const scale = Math.min((canvas.width - padding * 2) / gridWidth, (canvas.height - padding * 2) / gridHeight);
 
-      // Dibujo real centrado
       ctx.save();
       ctx.translate(canvas.width / 2 - ((minX + maxX) / 2) * scale, canvas.height / 2 - ((minY + maxY) / 2) * scale);
 
@@ -204,14 +200,12 @@
         else if (dir === 2) { sqX = currX - val; currX -= val; }
         else if (dir === 3) { sqY = currY - val; sqX = currX - val; currY -= val; }
 
-        // Dibujar Cuadrado
-        ctx.fillStyle = colors[i % colors.length] + '33'; // Transparente
+        ctx.fillStyle = colors[i % colors.length] + '33';
         ctx.strokeStyle = colors[i % colors.length];
         ctx.lineWidth = 2;
         ctx.fillRect(sqX * scale, sqY * scale, val * scale, val * scale);
         ctx.strokeRect(sqX * scale, sqY * scale, val * scale, val * scale);
 
-        // Texto del número
         if (val * scale > 15) {
           ctx.fillStyle = '#2c3e50';
           ctx.font = `${Math.max(10, Math.min(val * scale * 0.3, 20))}px Segoe UI`;
@@ -220,7 +214,6 @@
           ctx.fillText(val, (sqX + val / 2) * scale, (sqY + val / 2) * scale);
         }
 
-        // Arco de la Espiral
         ctx.beginPath();
         ctx.lineWidth = 3;
         ctx.strokeStyle = '#2c3e50';
